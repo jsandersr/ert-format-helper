@@ -28,8 +28,12 @@ ENCAPSULATED_CD_DEST = os.path.join(PATH, 'encapsulapted-cds.txt')
 
 HEADER_REGEX: Final = re.compile(r".*-.*?-\s")
 
+NAME_GROUP_REGEX: Final = "([\s\w]*)"
+
+SPELL_GROUP_REGEX: Final = "(\s*{spell:[0-9]*}\s\s)"
+
 RAID_CD_REGEX: Final = re.compile(
-    r"\|c[0-9abcdefABCDEF]{6,8}([\s\w]*)\|r(\s*{spell:[0-9]*}\s\s)")
+    rf"\|c[0-9abcdefABCDEF]{{6,8}}{NAME_GROUP_REGEX}\|r{SPELL_GROUP_REGEX}")
 
 
 def handle_data_format_bug_1(event_list) -> List[str]:
@@ -238,16 +242,11 @@ def should_be_visible_to_raid_leader(raider, raid_lead_visibility) -> bool:
         non healers like DH, DK, Warrior, etc.
     """
 
-    if raid_lead_visibility == RaidLeadVisibility.ALL:
-        return True
-    elif (raid_lead_visibility == RaidLeadVisibility.HEALER_CDS and
-            raider in HEALER_ROSTER):
-        return True
-    elif (raid_lead_visibility == RaidLeadVisibility.NON_HEALER_CDS and
-            raider not in HEALER_ROSTER):
-        return True
-
-    return False
+    return (raid_lead_visibility == RaidLeadVisibility.ALL
+            or (raid_lead_visibility == RaidLeadVisibility.HEALER_CDS and
+                raider in HEALER_ROSTER)
+            or (raid_lead_visibility == RaidLeadVisibility.NON_HEALER_CDS and
+                raider not in HEALER_ROSTER))
 
 
 def get_encapsulated_cd_from_match(cd_match, raid_lead_visibility) -> str:
